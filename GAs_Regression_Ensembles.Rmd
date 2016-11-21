@@ -1,0 +1,99 @@
+---
+title: "Weighted averaged ensembles with genetic algorithms"
+author: "Miguel Conde"
+date: "21 de noviembre de 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Let's suppose we have a training set with $N$ observations, each made of $M$ features values, and a target real variable, $y$.
+We build $k$ regression models ($m_i$) to estimate $y_i$ as $\hat{y}_i$.
+
+We are interested in building a weighted averaged ensemble this way:
+
+$$
+\hat{y}^{ens}_i = \sum_{j=1}^{k}{w_j\hat{y}_{ij}}
+$$
+
+
+Let $y_i$ be:
+```{r}
+N = 100
+
+y <- sin(seq(0, 2*pi, length.out = 100))
+```
+
+Let's simulate now the $k$ estimates.
+```{r}
+mn1 <- 0
+mn2 <- 0.5
+mn3 <- -0.5
+sd1 <- 0.1
+sd2 <- 0.1
+sd3 <- 0.1
+
+set.seed(6789)
+y_hat <- data.frame(y_hat_m1 = y + rnorm(N, mn1, sd1),
+                    y_hat_m2 = y + rnorm(N, mn2, sd2),
+                    y_hat_m3 = y + rnorm(N, mn3, sd3))
+```
+
+We need this code:
+```{r, message=FALSE, warning=FALSE}
+source("gaWARE.R")
+```
+
+Let's check the fitness function:
+
+```{r}
+# Check
+fitness_gaWARE(w = c(1, 0, -1), y = y, y_hat = y_hat,
+               maximize = TRUE, perfFunc = RMSE)
+
+fitness_gaWARE(w = c(1, 0, -1), y = y, y_hat = y_hat,
+               maximize = FALSE, perfFunc = myMAE)
+```
+
+Okay, let's look for our ensemble parameters:
+
+```{r}
+# Ranges of parameters to estimate
+minVector <- c(-10, -10, -10) # w1, w2, w3
+maxVector <- c(10, 10, 10)
+
+# Optimization (In this example: COST FUNCTION = myMAE())
+GA <- ga(type = "real-valued",
+         fitness = function(x, ...) fitness_gaWARE(x, ...),
+         ## '...' for fitness_gaWARE()
+         y = y, y_hat = y_hat,
+         maximize = FALSE, perfFunc = myMAE,
+         ##
+         min = minVector, max = maxVector, popSize = 50,
+         maxiter = 100, names = c("w1", "w2", "w3"),
+         seed = 789,
+         monitor = NULL)
+
+summary(GA)
+GA@solution
+```
+
+```{r include=FALSE}
+w <- drop(GA@solution)
+```
+And our ensemble is:
+
+$$
+\hat{y}^{ens}_i = \sum_{j=1}^{k}{w_j\hat{y}_{ij}} = `r w[1]`\times\hat{y}_i + `r w[2]`\times\hat{y}_i + `r w[2]`\times\hat{y}_i 
+$$
+
+```{r}
+y_hat_ens <- as.matrix(y_hat) %*% t(GA@solution)
+```
+
+
+
+
+
