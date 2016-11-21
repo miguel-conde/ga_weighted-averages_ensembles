@@ -94,6 +94,19 @@ y_hat_ens <- as.matrix(y_hat) %*% t(GA@solution)
 ```
 
 
+## Using cross validation
+
+```{r}
+cvOpt_gaWARE(type = "cv", numFolds = 10, seed = 345,
+             y = y, y_hat = y_hat, maximize = FALSE, 
+             perfFunc = myMAE,
+             min = minVector, max = maxVector, 
+             popsize = 50, maxiter = 100, names = c("w1", "w2", "w3"),
+             monitor = NULL)
+```
+
+
+
 
 
 
