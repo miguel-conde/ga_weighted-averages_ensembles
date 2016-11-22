@@ -9,15 +9,19 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Let's suppose we have a training set with $N$ observations, each made of $M$ features values, and a target real variable, $y$.
-We build $k$ regression models ($m_i$) to estimate $y_i$ as $\hat{y}_i$.
+Let's suppose we have a training set with $N$ observations and a target real variable, $y_i$, $i=1...N$.
+Upon the $N$ observations we can build $k$ regression models ($M_m$, $m=1,...k$) to estimate each $y_i$ as $\hat{y}_i^m$.
 
 We are interested in building a weighted averaged ensemble this way:
 
 $$
-\hat{y}^{ens}_i = \sum_{j=1}^{k}{w_j\hat{y}_{ij}}
+\hat{y}^{ens}_i = \sum_{m=1}^{k}{w_m\hat{y}_i^m}
 $$
+where:
 
+*  $\hat{y}^{ens}_i$ is the ensemble estimate of $y_i$
+*  $\hat{y}_i^m$ is the model $m$ estimate of $y_i$
+*  $w_m$ is the weight assigned in the ensemble to the model $m_i$
 
 Let $y_i$ be:
 ```{r}
@@ -26,7 +30,7 @@ N = 100
 y <- sin(seq(0, 2*pi, length.out = 100))
 ```
 
-Let's simulate now the $k$ estimates.
+Let's simulate now the estimates of $k=3$ models.
 ```{r}
 mn1 <- 0
 mn2 <- 0.5
@@ -41,7 +45,7 @@ y_hat <- data.frame(y_hat_m1 = y + rnorm(N, mn1, sd1),
                     y_hat_m3 = y + rnorm(N, mn3, sd3))
 ```
 
-We need this code:
+We'll use this code:
 ```{r, message=FALSE, warning=FALSE}
 source("gaWARE.R")
 ```
@@ -57,7 +61,7 @@ fitness_gaWARE(w = c(1, 0, -1), y = y, y_hat = y_hat,
                maximize = FALSE, perfFunc = myMAE)
 ```
 
-Okay, let's look for our ensemble parameters:
+Okay, let's find our ensemble parameters:
 
 ```{r}
 # Ranges of parameters to estimate
@@ -83,6 +87,7 @@ GA@solution
 ```{r include=FALSE}
 w <- drop(GA@solution)
 ```
+
 And our ensemble is:
 
 $$
