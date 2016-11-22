@@ -97,13 +97,29 @@ y_hat_ens <- as.matrix(y_hat) %*% t(GA@solution)
 ## Using cross validation
 
 ```{r}
-cvOpt_gaWARE(type = "cv", numFolds = 10, seed = 345,
-             y = y, y_hat = y_hat, maximize = FALSE, 
-             perfFunc = myMAE,
-             min = minVector, max = maxVector, 
-             popsize = 50, maxiter = 100, names = c("w1", "w2", "w3"),
-             monitor = NULL)
+cvGA <- cvOpt_gaWARE(type = "cv", numFolds = 10, seed = 345,
+                     y = y, y_hat = y_hat, maximize = FALSE, 
+                     perfFunc = myMAE,
+                     min = minVector, max = maxVector,
+                     popsize = 50, maxiter = 100, 
+                     names = c("w1", "w2", "w3"),
+                     monitor = NULL)
 ```
+
+
+And now:
+$$
+\hat{y}^{ens}_i = \sum_{j=1}^{k}{w_j\hat{y}_{ij}} = `r cvGA$mn[1]`\times\hat{y}_i + `r cvGA$mn[2]`\times\hat{y}_i + `r cvGA$mn[2]`\times\hat{y}_i 
+$$
+```{r}
+y_hat_ens <- as.matrix(y_hat) %*% as.matrix(cvGA$mn)
+```
+
+As a curiosity:
+```{r}
+cvGA[setdiff(names(cvGA), c("GA"))]
+```
+
 
 # Session Info
 ```{r}
