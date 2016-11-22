@@ -1,5 +1,6 @@
 ## gaWARE - genetic algorithms Weighted Averaged Regression Ensembles
 require(GA)
+require(Metrics)
 require(caret)
 
 

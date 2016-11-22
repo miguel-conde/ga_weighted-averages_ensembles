@@ -51,7 +51,7 @@ Let's check the fitness function:
 ```{r}
 # Check
 fitness_gaWARE(w = c(1, 0, -1), y = y, y_hat = y_hat,
-               maximize = TRUE, perfFunc = RMSE)
+               maximize = TRUE, perfFunc = rmse)
 
 fitness_gaWARE(w = c(1, 0, -1), y = y, y_hat = y_hat,
                maximize = FALSE, perfFunc = myMAE)
@@ -105,7 +105,10 @@ cvOpt_gaWARE(type = "cv", numFolds = 10, seed = 345,
              monitor = NULL)
 ```
 
-
+# Session Info
+```{r}
+sessionInfo()
+```
 
 
 
