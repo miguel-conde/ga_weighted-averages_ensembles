@@ -1,0 +1,160 @@
+---
+title: "Weighted average ensambles with 1-layer neural networks"
+author: "Miguel Conde"
+date: "22 de noviembre de 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.align = "center")
+```
+
+We will work again with this setup:
+
+Let's suppose we have a training set with $N$ observations and a target real variable, $y_i$, $i=1...N$.
+Upon the $N$ observations we can build $k$ regression models ($M_m$, $m=1,...k$) to estimate each $y_i$ as $\hat{y}_i^m$.
+
+
+We are interested in building a weighted average ensemble this way:
+
+$$
+\hat{y}^{ens}_i = \sum_{m=1}^{k}{w_m\hat{y}_i^m}
+$$
+
+where:
+
+*  $\hat{y}^{ens}_i$ is the ensemble estimate of $y_i$
+*  $\hat{y}_i^m$ is the model $m$ estimate of $y_i$
+*  $w_m$ is the weight assigned in the ensemble to the model $m_i$
+
+Let $y_i$ be:
+
+```{r}
+N = 100
+
+y <- sin(seq(0, 2*pi, length.out = 100))
+```
+
+Let's simulate now the estimates of $k=3$ models.
+```{r}
+mn1 <- 0
+mn2 <- 0.5
+mn3 <- -0.5
+sd1 <- 0.1
+sd2 <- 0.1
+sd3 <- 0.1
+
+set.seed(6789)
+y_hat <- data.frame(y_hat_m1 = y + rnorm(N, mn1, sd1),
+                    y_hat_m2 = y + rnorm(N, mn2, sd2),
+                    y_hat_m3 = y + rnorm(N, mn3, sd3))
+```
+
+This time we are going to use a 1-hide layer neural network to obtain an optimized set of weights $w_m$.
+
+We'll take advantage of `caret` package functionalities:
+
+```{r}
+require(caret)
+modelLookup("neuralnet")
+```
+
+We need a function for our optimization function, `mae()` in this case:
+
+```{r}
+require(Metrics)
+
+myMAESummary <- function(data, lev = NULL, model = NULL) {
+  out <- c(postResample(data[, "pred"], data[, "obs"]),
+           mae(actual = data[,"obs"], predicted = data[,"pred"]))
+  names(out)[3] <- "MAE"
+  out
+}
+```
+
+
+```{r}
+trCtrl <- trainControl(method = "cv", 
+                       number = 10, 
+                       summaryFunction = myMAESummary)
+# nnet
+# tnGrd <- expand.grid(size = 1,
+#                      decay = c(0, 10^seq(-1, -4, length = 5 - 1)))
+
+# neuralnet
+tnGrd <- expand.grid(layer1 = 1, layer2 = 0, layer3 = 0)
+
+# dnn
+# tnGrd <- expand.grid(layer1 = 1, layer2 = 0, layer3 = 0,
+#                      hidden_dropout = 0, visible_dropout = 0)
+
+set.seed(5678)
+
+nnetM  <- train(x = y_hat,
+                y = y,
+                method = "neuralnet", # "neuralnet", "nnet", "dnn"
+                #trace = FALSE,
+                act.fct = function(x) {x},
+                metric = "MAE", 
+                maximize = FALSE,
+                trControl = trCtrl,
+                # tuneLength = 5
+                tuneGrid = tnGrd
+                )
+
+```
+
+```{r}
+nnetM
+```
+
+```{r}
+summary(nnetM)
+```
+
+Thanks to [Visualizing neural networks in R – update](https://beckmw.wordpress.com/2013/11/14/visualizing-neural-networks-in-r-update/) we can visualize the network:
+```{r}
+# library(devtools)
+# source_url('https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
+ 
+# plot.nnet(nnetM$finalModel)
+
+plot(nnetM$finalModel)
+
+```
+
+The weights are:
+```{r}
+l1_wts <- nnetM$finalModel$weights[[1]][[1]]
+l2_wts <- nnetM$finalModel$weights[[1]][[2]]
+l1_wts
+l2_wts
+```
+
+And our ensemble can be calculated as:
+
+
+$$
+(`r l1_wts[2,1]` \times \hat{y}^m_1 + `r l1_wts[3,1]` \times \hat{y}^m_2 + `r l1_wts[4,1]` \times \hat{y}^m_3 - `r l1_wts[1,1]`) \times `r l2_wts[2,1]` + `r l2_wts[1,1]` = \\ 
+`r l1_wts[2,1] * l2_wts[2,1]` \times \hat{y}^m_1 + `r l1_wts[3,1] * l2_wts[2,1]` \times \hat{y}^m_2 + `r l1_wts[4,1] * l2_wts[2,1]` \times \hat{y}^m_3 + (`r l1_wts[1,1] * l2_wts[2,1] + l2_wts[1,1]`  )
+$$
+
+
+In R:
+```{r}
+y_hat_ens <- cbind(1, (as.matrix(cbind(1,y_hat)) %*% l1_wts)) %*% l2_wts
+```
+
+```{r}
+head(y_hat_ens)
+```
+```{r}
+head(predict(nnetM, y_hat))
+```
+
+
+# Session Info
+```{r}
+sessionInfo()
+```
