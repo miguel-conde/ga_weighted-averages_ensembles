@@ -118,7 +118,23 @@ $$
 $$
 ```{r}
 y_hat_ens <- as.matrix(y_hat) %*% as.matrix(cvGA$mn)
+head(y_hat_ens)
 ```
+
+It's better to use the appropiated function:
+
+A) With CV average weights:
+```{r}
+y_hat_ens <- predict.gaWARE(optGA = cvGA, x = y_hat, return_avg_wts = TRUE)
+head(y_hat_ens)
+```
+
+B) Or with the best CV set of weights:
+```{r}
+y_hat_ens <- predict.gaWARE(optGA = cvGA, x = y_hat, return_avg_wts = FALSE)
+head(y_hat_ens)
+```
+
 
 As a curiosity:
 ```{r}

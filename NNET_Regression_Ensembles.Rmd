@@ -94,7 +94,6 @@ set.seed(5678)
 nnetM  <- train(x = y_hat,
                 y = y,
                 method = "neuralnet", # "neuralnet", "nnet", "dnn"
-                #trace = FALSE,
                 act.fct = function(x) {x},
                 metric = "MAE", 
                 maximize = FALSE,

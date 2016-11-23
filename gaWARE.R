@@ -59,7 +59,14 @@ cvOpt_gaWARE <- function(type = "cv", numFolds = 10, seed = 345,
                          y, y_hat, maximize = TRUE, perfFunc = RMSE,
                          min, max, popsize = 50, maxiter = 100, names,
                          monitor = NULL) {
+  
+  
+  ws_out <- list()
+  ws_out$maximize <- maximize
+  
   if (type == "cv") {
+    ws_out$type <- "cv"
+    
     set.seed(seed)
     idxFolds <- createFolds(y, k = numFolds, returnTrain = TRUE)
     
@@ -81,9 +88,7 @@ cvOpt_gaWARE <- function(type = "cv", numFolds = 10, seed = 345,
     fv <- do.call(rbind, lapply(ga, function(x) return(x@fitnessValue)))
     rownames(ws) <- rownames(fv)
     colnames(fv) <- "Fitness function value"
-    
-    ws_out           <- list()
-    
+
     ws_out$GA        <- ga
     
     ws_out$ws        <- ws
@@ -99,11 +104,11 @@ cvOpt_gaWARE <- function(type = "cv", numFolds = 10, seed = 345,
     ws_out$fv_mn     <- apply(fv, 2, mean, na.rm = TRUE)
     ws_out$fv_sd     <- apply(fv, 2, sd, na.rm = TRUE)
     ws_out$fv_t_test <- apply(fv, 2, t.test, na.rm = TRUE)
-    
-    return(ws_out)
   }
   else {
-    GA <- ga(type = "real-valued",
+    ws_out$type <- "none"
+    
+    ws_out$GA <- ga(type = "real-valued",
              fitness = function(x, ...) fitness_gaWARE(x, ...),
              ## '...' for fitness_gaWARE()
              y = y, y_hat = y_hat,
@@ -113,8 +118,42 @@ cvOpt_gaWARE <- function(type = "cv", numFolds = 10, seed = 345,
              maxiter = 100, names = c("w1", "w2", "w3"),
              seed = 789,
              monitor = NULL)
-    return(GA)
   }
+  
+  return(ws_out)
+}
+
+#' Title
+#'
+#' @param optGA 
+#' @param x 
+#' @param return_avg_wts 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+predict.gaWARE <- function(optGA, x, return_avg_wts = FALSE) {
+  if (optGA$type == "cv") {
+    if (return_avg_wts == FALSE) { # Use best CV results
+      if(optGA$maximize == FALSE) {
+        wts <- optGA$ws[which(optGA$fv == min(optGA$fv)),]
+      }
+      else
+      {
+        wts <- optGA$ws[which(optGA$fv == max(optGA$fv)),]
+      }
+    }
+    else { # Use average wts
+      wts <- optGA$mn
+    }
+  }
+  else {
+    wts <- optGA$GA@solution
+  }
+  
+  return(as.matrix(x) %*% as.matrix(wts))
+  
 }
 
 #' Title
