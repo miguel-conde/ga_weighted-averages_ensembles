@@ -91,7 +91,7 @@ w <- drop(GA@solution)
 And our ensemble is:
 
 $$
-\hat{y}^{ens}_i = \sum_{m=1}^{k}{w_m\hat{y}_i^m} = `r w[1]`\times\hat{y}_1 + `r w[2]`\times\hat{y}_2 + `r w[2]`\times\hat{y}_3 
+\hat{y}^{ens}_i = \sum_{m=1}^{k}{w_m\hat{y}_i^m} = `r w[1]`\times\hat{y}_1 + `r w[2]`\times\hat{y}_2 + `r w[3]`\times\hat{y}_3 
 $$
 
 ```{r}
@@ -114,7 +114,7 @@ cvGA <- cvOpt_gaWARE(type = "cv", numFolds = 10, seed = 345,
 
 And now:
 $$
-\hat{y}^{ens}_i = \sum_{m=1}^{k}{w_m\hat{y}_i^m} = `r cvGA$mn[1]`\times\hat{y}_1 + `r cvGA$mn[2]`\times\hat{y}_2 + `r cvGA$mn[2]`\times\hat{y}_3 
+\hat{y}^{ens}_i = \sum_{m=1}^{k}{w_m\hat{y}_i^m} = `r cvGA$mn[1]`\times\hat{y}_1 + `r cvGA$mn[2]`\times\hat{y}_2 + `r cvGA$mn[3]`\times\hat{y}_3 
 $$
 ```{r}
 y_hat_ens <- as.matrix(y_hat) %*% as.matrix(cvGA$mn)
